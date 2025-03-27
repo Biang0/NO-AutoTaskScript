@@ -3,14 +3,14 @@ name: tieba1
 on:
   workflow_dispatch:
   schedule:
-    - cron: "50 5 * * *"
+    - cron: "0 16 * * *"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 14  
+      - name: Use Node.js 14
         uses: actions/setup-node@v4
         with:
           node-version: '14.x'
@@ -20,9 +20,9 @@ jobs:
         id: cache-node-modules
         with:
           path: node_modules
-          key: ${{ runner.os }}-${{ matrix.node-version }}-nodeModules-${{ hashFiles('package-lock.json') }}-${{ hashFiles('package.json') }}
+          key: ${{ runner.os }}-${{ steps.setup-node.outputs.node-version }}-nodeModules-${{ hashFiles('package-lock.json') }}-${{ hashFiles('package.json') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.node-version }}-nodeModules-
+            ${{ runner.os }}-${{ steps.setup-node.outputs.node-version }}-nodeModules-
 
       - name: Install dependency packages
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
