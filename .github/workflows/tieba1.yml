@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: "0 16 * * *"
 
-# 现在就启用 Node.js 24，消除弃用警告
+# 立即启用 Node.js 24，消除弃用警告
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -13,14 +13,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 升级到支持 Node.js24 的新版
       - uses: actions/checkout@v4
+
       - name: Use Node.js 14
         uses: actions/setup-node@v4
         with:
           node-version: '14.x'
 
-      # cache 升级到 v4，支持 Node.js24
+      # cache 升级到 v4，支持 Node.js 24
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
@@ -32,12 +32,10 @@ jobs:
 
       - name: Install dependency packages
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: |
-          npm install
+        run: npm install
 
       - name: Start running the script
-        run: |
-          node src/client/sudojia_tieba_taskSign.js
+        run: node src/client/sudojia_tieba_taskSign.js
         env:
           TIE_BA_COOKIE: ${{ secrets.TIE_BA_COOKIE }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
@@ -52,9 +50,9 @@ jobs:
           PUSH_PLUS_TOKEN: ${{ secrets.PUSH_PLUS_TOKEN }}
           PUSH_PLUS_USER: ${{ secrets.PUSH_PLUS_USER }}
 
-      # 替换掉弃用、不支持 Node24 的清理 Action
+      # 替换为正确可用的清理 Action（用 main 分支最稳）
       - name: Delete old workflow runs
-        uses: GitRML/delete-workflow-runs@v2.0.0
+        uses: GitRML/delete-workflow-runs@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           retain_days: 1
