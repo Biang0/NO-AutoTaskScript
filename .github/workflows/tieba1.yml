@@ -5,18 +5,24 @@ on:
   schedule:
     - cron: "0 16 * * *"
 
+# 现在就启用 Node.js 24，消除弃用警告
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 升级到支持 Node.js24 的新版
       - uses: actions/checkout@v4
       - name: Use Node.js 14
         uses: actions/setup-node@v4
         with:
           node-version: '14.x'
 
+      # cache 升级到 v4，支持 Node.js24
       - name: Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-node-modules
         with:
           path: node_modules
@@ -46,8 +52,10 @@ jobs:
           PUSH_PLUS_TOKEN: ${{ secrets.PUSH_PLUS_TOKEN }}
           PUSH_PLUS_USER: ${{ secrets.PUSH_PLUS_USER }}
 
-      - name: Delete Workflow Runs
-        uses: Mattraks/delete-workflow-runs@main
+      # 替换掉弃用、不支持 Node24 的清理 Action
+      - name: Delete old workflow runs
+        uses: GitRML/delete-workflow-runs@v2.0.0
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           retain_days: 1
           keep_minimum_runs: 1
