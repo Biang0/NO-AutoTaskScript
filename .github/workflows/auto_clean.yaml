@@ -1,31 +1,27 @@
-name: 自动push防止Actions自动停止
+name: 'workflows日志自动清理'
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 0 1,15 * *'
-  repository_dispatch:
-    types: [start_action]
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
-  build:
+  del_workflow:
     runs-on: ubuntu-latest
-    if: github.event.repository.owner.id == github.event.sender.id || ! github.event.sender.id || github.actor == 'BlueSkyClouds'
+    permissions:
+      actions: write  # 必须要有删除权限
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - name: 强制删除 1 天前的所有工作流运行记录
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
 
-      # 从 GitHub Secrets 安全读取信息，绝不泄露
-      - name: 配置Git用户信息（加密隐私）
         run: |
-          git config --global user.name "${{ secrets.USER_NAME }}"
-          git config --global user.email "${{ secrets.USER_EMAIL }}"
+          # 列出所有 已完成 的运行记录（只拿 ID）
+          gh run list --status completed --json id --jq '.[] .id' | while read run_id; do
+            echo "🗑️ 删除运行记录：$run_id"
+            gh run delete "$run_id" --yes
+          done
 
-      - name: 创建空提交
-        run: git commit --allow-empty -m "Auto keep active"
-
-      - name: 推送到script分支
-        run: git push origin HEAD:script
+          echo "🎉 清理完成！所有 1 天前的运行记录已全部删除"
