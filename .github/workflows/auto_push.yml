@@ -11,23 +11,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      # 只留这一个，官方推荐提前启用 Node24 ✅
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     if: github.event.repository.owner.id == github.event.sender.id || ! github.event.sender.id || github.actor == 'BlueSkyClouds'
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
-          fetch-depth: 0
 
-      - name: 配置Git
+      - name: 配置 Git
         run: |
           git config --global user.name "Biang0"
           git config --global user.email "wangyuan0999@gmail.com"
 
       - name: 创建空提交
-        run: git commit --allow-empty -m "Auto keep alive"
+        run: git commit --allow-empty -m "Auto keep active"
 
-      - name: 推送到script分支
+      - name: 推送到 script 分支
         run: git push origin HEAD:script
