@@ -1,3 +1,4 @@
+
 name: tieba1
 
 on:
@@ -23,12 +24,10 @@ jobs:
           key: ${{ runner.os }}-${{ steps.setup-node.outputs.node-version }}-nodeModules-${{ hashFiles('package-lock.json') }}-${{ hashFiles('package.json') }}
           restore-keys: |
             ${{ runner.os }}-${{ steps.setup-node.outputs.node-version }}-nodeModules-
-
       - name: Install dependency packages
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: |
           npm install
-
       - name: Start running the script
         run: |
           node src/client/sudojia_tieba_taskSign.js
