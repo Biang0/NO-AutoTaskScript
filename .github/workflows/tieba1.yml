@@ -3,15 +3,14 @@ name: tieba1
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 16 * * *"
-
-# 立即启用 Node.js 24，消除弃用警告
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    - cron: "0 16 * *"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # 强制全局使用 Node.js 24，消除所有警告
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -20,7 +19,6 @@ jobs:
         with:
           node-version: '14.x'
 
-      # cache 升级到 v4，支持 Node.js 24
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
@@ -30,11 +28,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ steps.setup-node.outputs.node-version }}-nodeModules-
 
-      - name: Install dependency packages
+      - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm install
 
-      - name: Start running the script
+      - name: Run script
         run: node src/client/sudojia_tieba_taskSign.js
         env:
           TIE_BA_COOKIE: ${{ secrets.TIE_BA_COOKIE }}
@@ -50,10 +48,25 @@ jobs:
           PUSH_PLUS_TOKEN: ${{ secrets.PUSH_PLUS_TOKEN }}
           PUSH_PLUS_USER: ${{ secrets.PUSH_PLUS_USER }}
 
-      # 替换为正确可用的清理 Action（用 main 分支最稳）
-      - name: Delete old workflow runs
-        uses: GitRML/delete-workflow-runs@main
+      # 清理旧运行记录（替换为真正支持 Node24 的 Action）
+      - name: Delete workflow runs
+        uses: actions/github-script@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          retain_days: 1
-          keep_minimum_runs: 1
+          script: |
+            const res = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            const runs = res.data.workflow_runs
+              .filter(r => r.status === 'completed')
+              .slice(1);
+            for (const run of runs) {
+              try {
+                await github.rest.actions.deleteWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: run.id
+                });
+              } catch (e) {}
+            }
